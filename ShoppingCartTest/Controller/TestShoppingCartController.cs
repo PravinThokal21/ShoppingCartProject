@@ -13,32 +13,33 @@ namespace ShoppingCart.UnitTests.Controller
     
     public class TestShoppingCartController
     {
-        private static IMapper? _mapper;
-       
+        private static IMapper _mapper;
+        private Mock<IShoppingCartService> mockShoppingCartService;
+        private Mock<IProductService> mockproductService;
+
         public TestShoppingCartController()
-        {
-            if (_mapper == null)
+        {           
+            var mappingConfig = new MapperConfiguration(mc =>
             {
-                var mappingConfig = new MapperConfiguration(mc =>
-                {
-                    mc.AddProfile(new CartItemProfile());
-                });
-                IMapper mapper = mappingConfig.CreateMapper();
-                _mapper = mapper;
-            }           
+                mc.AddProfile(new CartItemProfile());
+            });
+
+            _mapper =  mappingConfig.CreateMapper();
+
+            mockShoppingCartService = new Mock<IShoppingCartService>();
+            mockproductService = new Mock<IProductService>();
+
         }
 
         [Fact]
         public  async void Post_OnSuccess_ReturnStatusCode200()
         {
-            //Arrange
-            Mock<IShoppingCartService> mockShoppingCartService = new Mock<IShoppingCartService>();
-            Mock<IProductService> mockproductService = new Mock<IProductService>();
+            //Arrange            
 
             CartItem cartItem = GetCartItem();
+           
             CartState cartState = GetCartState();
-
-            mockShoppingCartService.Setup(x => x.AddItem(cartItem));
+            mockShoppingCartService.Setup(x => x.AddOrUpdateCart(It.IsAny<CartItem>()).Result).Returns(true);
             mockShoppingCartService.Setup(x => x.GetCartState()).Returns(cartState);
 
             mockproductService.Setup(x => x.GetProductPrice(cartItem.Name)).ReturnsAsync(Tuple.Create<bool, decimal>(true, 2.45M));
@@ -64,12 +65,9 @@ namespace ShoppingCart.UnitTests.Controller
         public async void Post_OnProductNotFound_ReturnStatusCode400()
         {
             //Arrange
-            CartItem cartItem = GetCartItem();
+            CartItem cartItem = GetCartItem();          
 
-            Mock<IShoppingCartService> mockShoppingCartService = new Mock<IShoppingCartService>();
-            Mock<IProductService> mockproductService = new Mock<IProductService>();
-
-            mockShoppingCartService.Setup(x => x.AddItem(cartItem));
+            mockShoppingCartService.Setup(x => x.AddOrUpdateCart(cartItem));
 
             mockproductService.Setup(x => x.GetProductPrice(cartItem.Name)).ReturnsAsync(Tuple.Create<bool, decimal>(false, 0));
 
@@ -87,15 +85,14 @@ namespace ShoppingCart.UnitTests.Controller
             Assert.NotNull(badRequestObjectResult.Value);
             Assert.IsType<string>(badRequestObjectResult.Value);
             string msg = (string)badRequestObjectResult.Value;
-            Assert.Equal(msg, "Product not found !!");
+            Assert.Equal(msg, "Product not found !!!");
         }
 
         [Fact]
-        public async void Get_OnShoopingCartState_ReturnStatusCode200()
+        public void Get_OnShoopingCartState_ReturnStatusCode200()
         {
-            CartState cartState = GetCartState();
-            Mock<IShoppingCartService> mockShoppingCartService = new Mock<IShoppingCartService>();
-            Mock<IProductService> mockproductService = new Mock<IProductService>();
+            //Arrange
+            CartState cartState = GetCartState();         
 
             mockShoppingCartService.Setup(x => x.GetCartState()).Returns(cartState);
 

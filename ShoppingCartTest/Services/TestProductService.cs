@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using ShoppingCart.API;
 using ShoppingCart.API.Services.Implementations;
 using System;
@@ -12,12 +13,16 @@ namespace ShoppingCart.UnitTests.Services
 {
     public class TestProductService
     {
-        IOptions<AppSettings> options;
-        HttpClient httpClient;        
+        IOptions<AppSettings> appSettingsOptions;
+        HttpClient httpClient;
+        IMemoryCache memoryCache;
         public TestProductService()
         {
-            options = Options.Create<AppSettings>(new AppSettings("https://equalexperts.github.io/", "backend-take-home-test-data/{product}.json"));
+            appSettingsOptions = Options.Create<AppSettings>(new AppSettings("https://equalexperts.github.io/", "backend-take-home-test-data/{product}.json"));
             httpClient = new HttpClient();
+            MemoryCacheOptions memoryCacheOptions = new MemoryCacheOptions();
+            IOptions<MemoryCacheOptions> options = Options.Create<MemoryCacheOptions>(memoryCacheOptions);
+            memoryCache = new MemoryCache(options);
         }
 
         [Theory]
@@ -28,7 +33,7 @@ namespace ShoppingCart.UnitTests.Services
         [InlineData("weetabix", "9.98")]
         public async void Test_OnSuccess_GetProductPrice(string name, string price)
         {
-            ProductService productService = new ProductService(options, httpClient);
+            ProductService productService = new ProductService(appSettingsOptions, httpClient, memoryCache);
 
             var result = await productService.GetProductPrice(name);
 
@@ -41,7 +46,7 @@ namespace ShoppingCart.UnitTests.Services
         [InlineData("abc")]
         public async void Test_OnFailuer_GetProductPrice(string name)
         {
-            ProductService productService = new ProductService(options, httpClient);
+            ProductService productService = new ProductService(appSettingsOptions, httpClient, memoryCache);
 
             var result = await productService.GetProductPrice(name);
 

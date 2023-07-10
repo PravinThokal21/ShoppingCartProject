@@ -1,11 +1,6 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
-using ShoppingCart.API.Models;
-using Microsoft.AspNetCore.Builder;
-using Swashbuckle.AspNetCore;
-using Swashbuckle.AspNetCore.SwaggerUI;
 using ShoppingCart.API;
+using ShoppingCart.API.Models;
 using ShoppingCart.API.Services.Implementations;
 using ShoppingCart.API.Services.Interfaces;
 
@@ -21,7 +16,8 @@ builder.Services.AddDbContext<ShoppingCartContext>(opt =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(Program));
-builder.Services.AddTransient<IProductService, ProductService>().AddHttpClient<ProductService>();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IProductService, ProductService>().AddHttpClient<ProductService>();
 builder.Services.AddTransient<IShoppingCartService, ShoppingCartService>();
 
 // Add middleware

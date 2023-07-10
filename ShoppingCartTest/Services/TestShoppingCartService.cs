@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using ShoppingCart.API.Models;
 using ShoppingCart.API.Services.Implementations;
 using System;
@@ -13,6 +14,16 @@ namespace ShoppingCart.UnitTests.Services
 {
     public class TestShoppingCartService
     {
+        ShoppingCartContext shoppingCartContext;
+        ShoppingCartService shoppingCartService;        
+        DbContextOptions<ShoppingCartContext> dbContextOptions;
+        public TestShoppingCartService()
+        {
+            dbContextOptions = new DbContextOptionsBuilder<ShoppingCartContext>().UseInMemoryDatabase("ShoppingCart").Options;
+            shoppingCartContext = new ShoppingCartContext(dbContextOptions);
+            shoppingCartService = new ShoppingCartService(shoppingCartContext);
+        }
+
         [Theory]
         [InlineData("cheerios","2", "8.43")]
         [InlineData("cornflakes","2", "2.52")]
@@ -21,28 +32,17 @@ namespace ShoppingCart.UnitTests.Services
         [InlineData("weetabix", "2","9.98")]
         public async void  OnSuccess_AddCartItem(string name, string quantity,string price)
         {
-            var dbContextOptions = new DbContextOptionsBuilder<ShoppingCartContext>().UseInMemoryDatabase("ShoppingCart").Options;
-            ShoppingCartContext shoppingCartContext = new ShoppingCartContext(dbContextOptions);
-            ShoppingCartService shoppingCartService = new ShoppingCartService(shoppingCartContext);
-
-            bool result = await shoppingCartService.AddItem(new API.Entity.CartItem(0,name,Convert.ToInt32(quantity),Convert.ToDecimal(price)));
+            bool result = await shoppingCartService.AddOrUpdateCart(new API.Entity.CartItem(0,name,Convert.ToInt32(quantity),Convert.ToDecimal(price)));
 
             Assert.True(result);
 
         }
 
-        [Theory]
-        [InlineData("cheerios", "2", "8.43")]
-        public async void OnFailuer_AddCartItem(string name, string quantity, string price)
+        [Fact]
+        public void TestGetCartState()
         {
-            var dbContextOptions = new DbContextOptionsBuilder<ShoppingCartContext>().UseInMemoryDatabase("ShoppingCart").Options;
-            ShoppingCartContext shoppingCartContext = new ShoppingCartContext(dbContextOptions);
-            ShoppingCartService shoppingCartService = new ShoppingCartService(shoppingCartContext);
-
-            bool result = await shoppingCartService.AddItem(new API.Entity.CartItem(1, name, Convert.ToInt32(quantity), Convert.ToDecimal(price)));
-
-            Assert.False(result);
-
+            var cartState = shoppingCartService.GetCartState();
+            Assert.NotNull(cartState);
         }
     }
 }

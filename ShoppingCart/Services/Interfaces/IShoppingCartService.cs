@@ -5,7 +5,7 @@ namespace ShoppingCart.API.Services.Interfaces
 {
     public interface IShoppingCartService
     {
-        public Task<bool> AddOrUpdateCart(CartItem cartItem);
+        public Task<bool> AddItem(CartItem cartItem);
         public CartState GetCartState();
     }
 }

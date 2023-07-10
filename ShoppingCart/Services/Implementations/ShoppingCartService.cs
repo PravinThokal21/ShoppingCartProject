@@ -12,28 +12,18 @@ namespace ShoppingCart.API.Services.Implementations
         {
             _DBContext = shoppingCartContext;
         }
-        public async Task<bool> AddOrUpdateCart(CartItem cartItem)
+        public async Task<bool> AddItem(CartItem cartItem)
         {
             bool result = true;
             int returnValue = 0;
 
-            var existingItem = _DBContext.CartItems.Where(x => x.Name == cartItem.Name).FirstOrDefault();
-
-            if (existingItem == null)
-            {
-                _DBContext.CartItems.Add(cartItem);
-            }
-            else
-            {
-                existingItem.Quantity += cartItem.Quantity;
-                _DBContext.Update(existingItem);
-            }
+            _DBContext.CartItems.Add(cartItem);
 
             try
             {
                 returnValue = await _DBContext.SaveChangesAsync();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 result = false;
             }    
@@ -47,11 +37,14 @@ namespace ShoppingCart.API.Services.Implementations
 
             cartState.cartItems = _DBContext.CartItems.ToList();
 
-            cartState.cartItems.ForEach(cartItem => { Math.Round(cartState.Subtotal += cartItem.Quantity * cartItem.Price,2); });                
+            foreach(CartItem cartItem in cartState.cartItems) 
+            {
+                cartState.Subtotal += cartItem.Quantity * cartItem.Price;
+            }
 
-            cartState.Tax = Math.Round(cartState.Subtotal * TaxRate / 100,2 );
+            cartState.Tax = (cartState.Subtotal * TaxRate / 100 );
 
-            cartState.Total = Math.Round(cartState.Tax + cartState.Subtotal,2);
+            cartState.Total = cartState.Tax + cartState.Subtotal;
 
             return cartState;
         }

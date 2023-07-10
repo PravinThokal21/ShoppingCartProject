@@ -27,23 +27,19 @@ namespace ShoppingCart.API.Controller
         {
             CartState cartState ;
 
-            var priceTouple = await _productService.GetProductPrice(cartItemDto.Name);
+            var toupleResult = await _productService.GetProductPrice(cartItemDto.Name);
 
-            if (priceTouple.Item1)
+            if (toupleResult.Item1)
             {
                 var item = _mapper.Map<CartItem>(cartItemDto);
-                item.Price = priceTouple.Item2;
-
-                bool result = await _shoppingCartService.AddOrUpdateCart(item);
-
-                if(result)
-                    cartState = _shoppingCartService.GetCartState();
-                else
-                    return BadRequest("Something went wrong, please try again !!!");
+                item.Price = toupleResult.Item2;
+                await _shoppingCartService.AddItem(item);
+                cartState = _shoppingCartService.GetCartState();
             }
             else 
             {
-                return BadRequest("Product not found !!!");
+
+                return BadRequest("Product not found !!");
             }
 
             return Ok(cartState);
